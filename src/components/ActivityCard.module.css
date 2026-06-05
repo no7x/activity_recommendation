@@ -27,14 +27,15 @@
   flex: 1;
 }
 
-.badges {
+.topBadges {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .category {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -45,10 +46,19 @@
 }
 
 .time {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: #e07c3e;
   background: #fff4ec;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+}
+
+.rainy {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #3182ce;
+  background: #ebf8ff;
   padding: 0.2rem 0.6rem;
   border-radius: 1rem;
 }
@@ -61,39 +71,49 @@
 }
 
 .description {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #718096;
   line-height: 1.5;
   margin: 0 0 0.75rem;
   flex: 1;
 }
 
-.meta {
+.details {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 
-.age {
+.detail {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #38a169;
-  background: #f0fff4;
+  color: #4a5568;
+  background: #f7fafc;
   padding: 0.2rem 0.6rem;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
 }
 
-.tags {
+.bottomBadges {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
 }
 
-.tag {
+.badge {
   font-size: 0.7rem;
-  color: #a0aec0;
-  background: #f7fafc;
+  color: #38a169;
+  background: #f0fff4;
   padding: 0.15rem 0.5rem;
   border-radius: 0.5rem;
+  font-weight: 600;
+}
+
+.bookBadge {
+  font-size: 0.7rem;
+  color: #d69e2e;
+  background: #fffff0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
 }

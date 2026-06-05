@@ -12,21 +12,37 @@ export type Category =
   | "Cooking"
   | "Science";
 
+export type CostLevel = "free" | "budget" | "moderate" | "premium";
+
 export interface Activity {
   id: string;
   title: string;
   description: string;
   category: Category;
-  ageRange: string;
+  ageMin: number;
+  ageMax: number;
   imageEmoji: string;
   tags: string[];
   daysOfWeek: DayOfWeek[] | null;
   seasonal: Season[] | null;
   timeOfDay: TimeOfDay;
+  cost: CostLevel;
+  costNote: string;
+  neighborhood: string;
+  isIndoor: boolean;
+  isRainyDayFriendly: boolean;
+  isStrollerFriendly: boolean;
+  bookingUrl: string | null;
+  bookingRequired: boolean;
 }
 
 export interface Filters {
   category?: Category;
+  ageOfChild?: number;
+  cost?: CostLevel[];
+  indoorOnly?: boolean;
+  rainyDay?: boolean;
+  strollerFriendly?: boolean;
 }
 
 export interface ActivityProvider {

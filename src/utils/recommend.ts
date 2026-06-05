@@ -8,13 +8,38 @@ function getSeason(date: Date): Season {
   return "winter";
 }
 
-function shuffle<T>(arr: T[]): T[] {
+function seededShuffle<T>(arr: T[], seed: number): T[] {
   const result = [...arr];
+  let s = seed;
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    s = (s * 1664525 + 1013904223) & 0x7fffffff;
+    const j = s % (i + 1);
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+function dateSeed(date: Date): number {
+  return date.getFullYear() * 10000 + date.getMonth() * 100 + date.getDate();
+}
+
+function applyFilters(activities: Activity[], filters?: Filters): Activity[] {
+  if (!filters) return activities;
+
+  return activities.filter((a) => {
+    if (filters.category && a.category !== filters.category) return false;
+    if (filters.ageOfChild != null) {
+      if (filters.ageOfChild < a.ageMin || filters.ageOfChild > a.ageMax)
+        return false;
+    }
+    if (filters.cost && filters.cost.length > 0) {
+      if (!filters.cost.includes(a.cost)) return false;
+    }
+    if (filters.indoorOnly && !a.isIndoor) return false;
+    if (filters.rainyDay && !a.isRainyDayFriendly) return false;
+    if (filters.strollerFriendly && !a.isStrollerFriendly) return false;
+    return true;
+  });
 }
 
 export function getRecommendations(
@@ -25,30 +50,62 @@ export function getRecommendations(
   const dayOfWeek = date.getDay() as DayOfWeek;
   const season = getSeason(date);
 
-  let filtered = allActivities.filter((activity) => {
-    if (activity.seasonal && !activity.seasonal.includes(season)) return false;
-    if (activity.daysOfWeek && !activity.daysOfWeek.includes(dayOfWeek))
-      return false;
-    if (filters?.category && activity.category !== filters.category)
-      return false;
+  let results = allActivities.filter((a) => {
+    if (a.seasonal && !a.seasonal.includes(season)) return false;
+    if (a.daysOfWeek && !a.daysOfWeek.includes(dayOfWeek)) return false;
     return true;
   });
 
-  filtered.sort((a, b) => {
+  results = applyFilters(results, filters);
+
+  results.sort((a, b) => {
     let scoreA = 0;
     let scoreB = 0;
-
     if (a.daysOfWeek?.includes(dayOfWeek)) scoreA += 2;
     if (b.daysOfWeek?.includes(dayOfWeek)) scoreB += 2;
-
     if (a.seasonal?.includes(season)) scoreA += 1;
     if (b.seasonal?.includes(season)) scoreB += 1;
-
     return scoreB - scoreA;
   });
 
-  const topMatches = filtered.slice(0, Math.min(8, filtered.length));
-  const rest = filtered.slice(8);
+  const topMatches = results.slice(0, Math.min(8, results.length));
+  const rest = seededShuffle(results.slice(8), dateSeed(date));
+  return [...topMatches, ...rest];
+}
 
-  return [...topMatches, ...shuffle(rest)];
+export function getWeekendDates(fromDate: Date): Date[] {
+  const dates: Date[] = [];
+  const d = new Date(fromDate);
+  for (let i = 0; i < 7; i++) {
+    d.setDate(fromDate.getDate() + i);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) {
+      dates.push(new Date(d));
+    }
+  }
+  return dates;
+}
+
+export function getWeekendActivities(
+  allActivities: Activity[],
+  fromDate: Date,
+  filters?: Filters
+): Activity[] {
+  const weekendDates = getWeekendDates(fromDate);
+  if (weekendDates.length === 0) return [];
+
+  const seen = new Set<string>();
+  const results: Activity[] = [];
+
+  for (const date of weekendDates) {
+    const recs = getRecommendations(allActivities, date, filters);
+    for (const a of recs) {
+      if (!seen.has(a.id)) {
+        seen.add(a.id);
+        results.push(a);
+      }
+    }
+  }
+
+  return results;
 }

@@ -1,2 +1,8 @@
 export { StaticProvider } from "./StaticProvider";
-export type { Activity, ActivityProvider, Category, Filters } from "./types";
+export type {
+  Activity,
+  ActivityProvider,
+  Category,
+  CostLevel,
+  Filters,
+} from "./types";

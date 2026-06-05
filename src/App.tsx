@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import styles from "./App.module.css";
 import { ActivityList } from "./components/ActivityList";
-import { CategoryFilter } from "./components/CategoryFilter";
 import { DatePicker } from "./components/DatePicker";
+import { FilterBar } from "./components/FilterBar";
+import type { FilterState } from "./components/FilterBar";
 import { HeroBanner } from "./components/HeroBanner";
-import type { Activity, Category } from "./providers";
+import { SectionHeader } from "./components/SectionHeader";
+import type { Activity } from "./providers";
 import { StaticProvider } from "./providers";
 
 const provider = new StaticProvider();
@@ -21,28 +23,75 @@ function parseDateString(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+const defaultFilters: FilterState = {
+  category: null,
+  ageOfChild: null,
+  cost: [],
+  rainyDay: false,
+  indoorOnly: false,
+  strollerFriendly: false,
+};
+
+type ViewMode = "today" | "browse";
+
 export default function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>("today");
   const [dateStr, setDateStr] = useState(formatDateString(new Date()));
-  const [category, setCategory] = useState<Category | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+
+  const [todayActivities, setTodayActivities] = useState<Activity[]>([]);
+  const [weekendActivities, setWeekendActivities] = useState<Activity[]>([]);
+  const [browseActivities, setBrowseActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadActivities = useCallback(async () => {
-    setLoading(true);
-    const date = parseDateString(dateStr);
-    const filters = category ? { category } : undefined;
-    const results = await provider.getActivities(date, filters);
-    setActivities(results);
-    setLoading(false);
-  }, [dateStr, category]);
+  const filtersForProvider = useCallback(() => {
+    return {
+      category: filters.category ?? undefined,
+      ageOfChild: filters.ageOfChild ?? undefined,
+      cost: filters.cost.length > 0 ? filters.cost : undefined,
+      indoorOnly: filters.indoorOnly || undefined,
+      rainyDay: filters.rainyDay || undefined,
+      strollerFriendly: filters.strollerFriendly || undefined,
+    };
+  }, [filters]);
 
   useEffect(() => {
-    loadActivities();
-  }, [loadActivities]);
+    const load = async () => {
+      setLoading(true);
+      const f = filtersForProvider();
+      const today = new Date();
+      const [todayRes, weekendRes] = await Promise.all([
+        provider.getActivities(today, f),
+        provider.getWeekendActivities(today, f),
+      ]);
+      setTodayActivities(todayRes);
+      setWeekendActivities(weekendRes);
+      setLoading(false);
+    };
+    if (viewMode === "today") load();
+  }, [viewMode, filtersForProvider]);
 
-  const date = parseDateString(dateStr);
-  const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
-  const dateLabel = date.toLocaleDateString("en-US", {
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const date = parseDateString(dateStr);
+      const results = await provider.getActivities(date, filtersForProvider());
+      setBrowseActivities(results);
+      setLoading(false);
+    };
+    if (viewMode === "browse") load();
+  }, [viewMode, dateStr, filtersForProvider]);
+
+  const today = new Date();
+  const todayLabel = today.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  const browseDate = parseDateString(dateStr);
+  const browseLabel = browseDate.toLocaleDateString("en-US", {
+    weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -51,15 +100,59 @@ export default function App() {
   return (
     <div className={styles.app}>
       <HeroBanner />
-      <div className={styles.controls}>
-        <DatePicker value={dateStr} onChange={setDateStr} />
-        <p className={styles.dateInfo}>
-          Showing activities for <strong>{dayName}</strong>, {dateLabel} in{" "}
-          <strong>Berlin</strong>
-        </p>
-        <CategoryFilter selected={category} onChange={setCategory} />
+
+      <div className={styles.viewToggle}>
+        <button
+          className={`${styles.toggleBtn} ${viewMode === "today" ? styles.toggleActive : ""}`}
+          onClick={() => setViewMode("today")}
+        >
+          Today & Weekend
+        </button>
+        <button
+          className={`${styles.toggleBtn} ${viewMode === "browse" ? styles.toggleActive : ""}`}
+          onClick={() => setViewMode("browse")}
+        >
+          Browse by Date
+        </button>
       </div>
-      <ActivityList activities={activities} loading={loading} />
+
+      <FilterBar filters={filters} onChange={setFilters} />
+
+      {viewMode === "today" ? (
+        <>
+          <SectionHeader
+            title={`Today — ${todayLabel}`}
+            subtitle="Recommended activities for today in Berlin"
+            count={todayActivities.length}
+          />
+          <ActivityList activities={todayActivities} loading={loading} />
+
+          {weekendActivities.length > 0 && (
+            <>
+              <SectionHeader
+                title="This Weekend"
+                subtitle="Featured activities for Saturday & Sunday"
+                count={weekendActivities.length}
+              />
+              <ActivityList
+                activities={weekendActivities}
+                loading={loading}
+              />
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <div className={styles.browseControls}>
+            <DatePicker value={dateStr} onChange={setDateStr} />
+            <p className={styles.dateInfo}>
+              Showing activities for <strong>{browseLabel}</strong> in{" "}
+              <strong>Berlin</strong>
+            </p>
+          </div>
+          <ActivityList activities={browseActivities} loading={loading} />
+        </>
+      )}
     </div>
   );
 }
