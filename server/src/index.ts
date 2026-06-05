@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import cron from "node-cron";
 import path from "path";
+import { fileURLToPath } from "url";
 import type { CostLevel, Filters } from "../../src/providers/types";
 import { createDb } from "./db";
 import { EventStore } from "./eventStore";
@@ -91,7 +92,8 @@ app.post("/api/pipeline/run", async (req, res) => {
 app.get("/api/proxy", proxyHandler);
 
 // Serve frontend in production
-const distPath = path.join(import.meta.dirname, "..", "..", "dist");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distPath = path.join(__dirname, "..", "..", "dist");
 app.use(express.static(distPath));
 app.get("/{*splat}", (_req, res) => {
   res.sendFile(path.join(distPath, "index.html"));

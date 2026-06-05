@@ -1,7 +1,9 @@
 import Database from "better-sqlite3";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const DB_PATH = path.join(import.meta.dirname, "..", "data", "events.db");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DB_PATH = path.join(__dirname, "..", "data", "events.db");
 
 export function createDb(): Database.Database {
   const db = new Database(DB_PATH);
