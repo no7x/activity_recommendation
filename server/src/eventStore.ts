@@ -115,7 +115,7 @@ export class EventStore {
   getActivities(date: string, filters?: Filters): Activity[] {
     let sql = `
       SELECT * FROM events
-      WHERE date_start <= ? AND (date_end >= ? OR date_end IS NULL OR date_start = ?)
+      WHERE (date_start = ? OR (date_start <= ? AND date_end IS NOT NULL AND date_end >= ?))
     `;
     const params: unknown[] = [date, date, date];
 
@@ -141,10 +141,44 @@ export class EventStore {
       sql += " AND is_stroller_friendly = 1";
     }
 
-    sql += " ORDER BY date_start ASC LIMIT 50";
+    sql += " ORDER BY date_start ASC LIMIT 100";
 
     const rows = this.db.prepare(sql).all(...params) as EventRow[];
-    return rows.map(this.rowToActivity);
+    const all = rows.map(this.rowToActivity);
+    return this.curate(all);
+  }
+
+  private curate(activities: Activity[], limit = 10): Activity[] {
+    if (activities.length <= limit) return activities;
+
+    const picked: Activity[] = [];
+    const usedCategories = new Set<string>();
+
+    // First pass: one from each category for diversity
+    for (const a of activities) {
+      if (picked.length >= limit) break;
+      if (!usedCategories.has(a.category)) {
+        usedCategories.add(a.category);
+        picked.push(a);
+      }
+    }
+
+    // Second pass: fill remaining slots, preferring variety in cost and indoor/outdoor
+    const remaining = activities.filter((a) => !picked.includes(a));
+    const hasFree = picked.some((a) => a.cost === "free");
+    const hasIndoor = picked.some((a) => a.isIndoor);
+    const hasOutdoor = picked.some((a) => !a.isIndoor);
+
+    for (const a of remaining) {
+      if (picked.length >= limit) break;
+      // Prioritize adding what's missing
+      if (!hasFree && a.cost === "free") { picked.push(a); continue; }
+      if (!hasIndoor && a.isIndoor) { picked.push(a); continue; }
+      if (!hasOutdoor && !a.isIndoor) { picked.push(a); continue; }
+      picked.push(a);
+    }
+
+    return picked.slice(0, limit);
   }
 
   getActivitiesByDateRange(dateFrom: string, dateTo: string, filters?: Filters): Activity[] {
@@ -179,7 +213,8 @@ export class EventStore {
     sql += " ORDER BY date_start ASC LIMIT 100";
 
     const rows = this.db.prepare(sql).all(...params) as EventRow[];
-    return rows.map(this.rowToActivity);
+    const all = rows.map(this.rowToActivity);
+    return this.curate(all, 12);
   }
 
   getStats() {

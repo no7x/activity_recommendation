@@ -132,8 +132,7 @@ export default function App() {
         <>
           <SectionHeader
             title={`Today — ${todayLabel}`}
-            subtitle="Recommended activities for today in Berlin"
-            count={todayActivities.length}
+            subtitle="Our top picks for today in Berlin"
           />
           <ActivityList activities={todayActivities} loading={loading} />
 
@@ -141,8 +140,7 @@ export default function App() {
             <>
               <SectionHeader
                 title="This Weekend"
-                subtitle="Featured activities for Saturday & Sunday"
-                count={weekendActivities.length}
+                subtitle="Best picks for Saturday & Sunday"
               />
               <ActivityList activities={weekendActivities} loading={loading} />
             </>

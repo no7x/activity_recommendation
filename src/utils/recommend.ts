@@ -42,6 +42,32 @@ function applyFilters(activities: Activity[], filters?: Filters): Activity[] {
   });
 }
 
+function curate(activities: Activity[], seed: number, limit = 10): Activity[] {
+  if (activities.length <= limit) return activities;
+
+  const shuffled = seededShuffle(activities, seed);
+  const picked: Activity[] = [];
+  const usedCategories = new Set<string>();
+
+  // First: one from each category
+  for (const a of shuffled) {
+    if (picked.length >= limit) break;
+    if (!usedCategories.has(a.category)) {
+      usedCategories.add(a.category);
+      picked.push(a);
+    }
+  }
+
+  // Fill remaining with variety
+  const remaining = shuffled.filter((a) => !picked.includes(a));
+  for (const a of remaining) {
+    if (picked.length >= limit) break;
+    picked.push(a);
+  }
+
+  return picked;
+}
+
 export function getRecommendations(
   allActivities: Activity[],
   date: Date,
@@ -68,9 +94,7 @@ export function getRecommendations(
     return scoreB - scoreA;
   });
 
-  const topMatches = results.slice(0, Math.min(8, results.length));
-  const rest = seededShuffle(results.slice(8), dateSeed(date));
-  return [...topMatches, ...rest];
+  return curate(results, dateSeed(date), 10);
 }
 
 export function getWeekendDates(fromDate: Date): Date[] {
@@ -107,5 +131,5 @@ export function getWeekendActivities(
     }
   }
 
-  return results;
+  return curate(results, dateSeed(fromDate), 12);
 }
