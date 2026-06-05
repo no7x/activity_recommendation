@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "start": "node --import tsx server/src/index.ts",
     "pipeline:run": "tsx server/src/runPipeline.ts",
+    "db:seed": "tsx server/src/seedDb.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
