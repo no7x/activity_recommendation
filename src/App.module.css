@@ -1,7 +1,8 @@
 .app {
   min-height: 100vh;
   background: #f7f8fc;
-  padding-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .viewToggle {
@@ -52,4 +53,23 @@
   color: #4a5568;
   font-size: 0.95rem;
   margin: 0 0 1rem;
+}
+
+.footer {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  margin-top: auto;
+  color: #a0aec0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footerSub {
+  font-weight: 400;
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
 }

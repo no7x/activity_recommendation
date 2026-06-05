@@ -5,6 +5,7 @@ import { DatePicker } from "./components/DatePicker";
 import { FilterBar } from "./components/FilterBar";
 import type { FilterState } from "./components/FilterBar";
 import { HeroBanner } from "./components/HeroBanner";
+import { QuickActions } from "./components/QuickActions";
 import { SectionHeader } from "./components/SectionHeader";
 import type { Activity } from "./providers";
 import { StaticProvider } from "./providers";
@@ -82,6 +83,11 @@ export default function App() {
     if (viewMode === "browse") load();
   }, [viewMode, dateStr, filtersForProvider]);
 
+  const handleQuickAction = (partial: Partial<FilterState>) => {
+    setFilters({ ...defaultFilters, ...partial });
+    setViewMode("today");
+  };
+
   const today = new Date();
   const todayLabel = today.toLocaleDateString("en-US", {
     weekday: "long",
@@ -100,6 +106,8 @@ export default function App() {
   return (
     <div className={styles.app}>
       <HeroBanner />
+
+      <QuickActions onApply={handleQuickAction} />
 
       <div className={styles.viewToggle}>
         <button
@@ -134,10 +142,7 @@ export default function App() {
                 subtitle="Featured activities for Saturday & Sunday"
                 count={weekendActivities.length}
               />
-              <ActivityList
-                activities={weekendActivities}
-                loading={loading}
-              />
+              <ActivityList activities={weekendActivities} loading={loading} />
             </>
           )}
         </>
@@ -153,6 +158,13 @@ export default function App() {
           <ActivityList activities={browseActivities} loading={loading} />
         </>
       )}
+
+      <footer className={styles.footer}>
+        <p>Family Fun Finder — Berlin</p>
+        <p className={styles.footerSub}>
+          Helping families discover the best kids activities in the city
+        </p>
+      </footer>
     </div>
   );
 }
