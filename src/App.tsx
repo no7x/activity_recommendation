@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./App.module.css";
 import { ActivityList } from "./components/ActivityList";
 import { DatePicker } from "./components/DatePicker";
@@ -8,9 +8,9 @@ import { HeroBanner } from "./components/HeroBanner";
 import { QuickActions } from "./components/QuickActions";
 import { SectionHeader } from "./components/SectionHeader";
 import type { Activity } from "./providers";
-import { StaticProvider } from "./providers";
+import { SmartProvider } from "./providers";
 
-const provider = new StaticProvider();
+const provider = new SmartProvider();
 
 function formatDateString(date: Date): string {
   const y = date.getFullYear();
@@ -39,49 +39,51 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("today");
   const [dateStr, setDateStr] = useState(formatDateString(new Date()));
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [isLive, setIsLive] = useState(false);
 
   const [todayActivities, setTodayActivities] = useState<Activity[]>([]);
   const [weekendActivities, setWeekendActivities] = useState<Activity[]>([]);
   const [browseActivities, setBrowseActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const filtersForProvider = useCallback(() => {
-    return {
-      category: filters.category ?? undefined,
-      ageOfChild: filters.ageOfChild ?? undefined,
-      cost: filters.cost.length > 0 ? filters.cost : undefined,
-      indoorOnly: filters.indoorOnly || undefined,
-      rainyDay: filters.rainyDay || undefined,
-      strollerFriendly: filters.strollerFriendly || undefined,
-    };
-  }, [filters]);
+  const providerFilters = useMemo(() => ({
+    category: filters.category ?? undefined,
+    ageOfChild: filters.ageOfChild ?? undefined,
+    cost: filters.cost.length > 0 ? filters.cost : undefined,
+    indoorOnly: filters.indoorOnly || undefined,
+    rainyDay: filters.rainyDay || undefined,
+    strollerFriendly: filters.strollerFriendly || undefined,
+  }), [filters]);
+
+  const loadToday = useCallback(async () => {
+    setLoading(true);
+    const today = new Date();
+    const [todayRes, weekendRes] = await Promise.all([
+      provider.getActivities(today, providerFilters),
+      provider.getWeekendActivities(today, providerFilters),
+    ]);
+    setTodayActivities(todayRes);
+    setWeekendActivities(weekendRes);
+    setIsLive(provider.isLive);
+    setLoading(false);
+  }, [providerFilters]);
+
+  const loadBrowse = useCallback(async () => {
+    setLoading(true);
+    const date = parseDateString(dateStr);
+    const results = await provider.getActivities(date, providerFilters);
+    setBrowseActivities(results);
+    setIsLive(provider.isLive);
+    setLoading(false);
+  }, [dateStr, providerFilters]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const f = filtersForProvider();
-      const today = new Date();
-      const [todayRes, weekendRes] = await Promise.all([
-        provider.getActivities(today, f),
-        provider.getWeekendActivities(today, f),
-      ]);
-      setTodayActivities(todayRes);
-      setWeekendActivities(weekendRes);
-      setLoading(false);
-    };
-    if (viewMode === "today") load();
-  }, [viewMode, filtersForProvider]);
+    if (viewMode === "today") loadToday();
+  }, [viewMode, loadToday]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const date = parseDateString(dateStr);
-      const results = await provider.getActivities(date, filtersForProvider());
-      setBrowseActivities(results);
-      setLoading(false);
-    };
-    if (viewMode === "browse") load();
-  }, [viewMode, dateStr, filtersForProvider]);
+    if (viewMode === "browse") loadBrowse();
+  }, [viewMode, loadBrowse]);
 
   const handleQuickAction = (partial: Partial<FilterState>) => {
     setFilters({ ...defaultFilters, ...partial });
@@ -162,7 +164,9 @@ export default function App() {
       <footer className={styles.footer}>
         <p>Family Fun Finder — Berlin</p>
         <p className={styles.footerSub}>
-          Helping families discover the best kids activities in the city
+          {isLive
+            ? "Live data from Berlin event sources"
+            : "Showing curated sample activities"}
         </p>
       </footer>
     </div>

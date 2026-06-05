@@ -1,73 +1,87 @@
-# React + TypeScript + Vite
+# Family Fun Finder — Berlin
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Discover the best kids activities and events in Berlin. Parents pick a date and get curated recommendations, filtered by category, age, cost, and more.
 
-Currently, two official plugins are available:
+## Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
 
-## React Compiler
+# Frontend only (sample data)
+npm run dev
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Frontend + Backend (live data)
+npm run dev:all
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Architecture
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```
+src/                          # React frontend
+  components/                 # UI components
+  data/activities.ts          # 36 curated Berlin activities
+  providers/
+    SmartProvider.ts           # API-first with static fallback
+    ApiProvider.ts             # Fetches from backend API
+    StaticProvider.ts          # Built-in sample data
+  pipeline/
+    scrapers/                 # 8 Berlin event source scrapers
+    Pipeline.ts               # Scrape -> dedupe -> normalize orchestrator
+    SimpleNormalizer.ts        # Auto-categorize, parse age/cost
+    SimpleDeduplicator.ts      # Fingerprint-based dedup
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+server/                       # Express backend
+  src/
+    index.ts                  # API server + cron scheduling
+    db.ts                     # SQLite schema
+    eventStore.ts             # Query layer with filter support
+    pipelineRunner.ts         # Orchestrates all scrapers
+    proxy.ts                  # Domain-allowlisted fetch proxy
+```
+
+## Event Sources
+
+| Source | Type | Coverage |
+|--------|------|----------|
+| Kindaling | API + HTML | Family events |
+| HIMBEER | HTML | Monthly listings |
+| Berlin.de | API + HTML | City kids events |
+| Familienportal Berlin | HTML | Family services |
+| FEZ Berlin | HTML | Europe's largest kids center |
+| Museum calendars | HTML | 6 major museums |
+| Zoo/Tierpark | HTML | Zoo, Tierpark, Aquarium |
+| District calendars | HTML | All 12 Berlin Bezirke |
+
+## API Endpoints
+
+```
+GET  /api/activities?date=2026-06-07&category=Nature&age=5
+GET  /api/activities/range?from=2026-06-07&to=2026-06-08
+GET  /api/stats
+GET  /api/pipeline/status
+POST /api/pipeline/run        # { daysAhead: 14, sources: ["kindaling"] }
+```
+
+## Scripts
+
+```bash
+npm run dev          # Frontend dev server
+npm run dev:server   # Backend dev server (auto-reload)
+npm run dev:all      # Both in parallel
+npm run build        # Build frontend for production
+npm start            # Production server (serves frontend + API)
+npm run pipeline:run # Manual pipeline run
+```
+
+## Pipeline CLI
+
+```bash
+# Run all scrapers, 14 days ahead
+npm run pipeline:run
+
+# Specific sources, 7 days
+npm run pipeline:run -- --days=7 --sources=kindaling,himbeer
+
+# Just museums
+npm run pipeline:run -- --sources=museum
 ```
