@@ -21,7 +21,11 @@ export type EventSource =
   | "kindaling"
   | "himbeer"
   | "berlin-de"
+  | "familienportal"
   | "fez-berlin"
+  | "museum"
+  | "zoo-tierpark"
+  | "bezirk"
   | "eventbrite"
   | "manual";
 
