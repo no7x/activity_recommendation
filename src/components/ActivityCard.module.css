@@ -1,0 +1,99 @@
+.card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.emoji {
+  font-size: 3rem;
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+  background: linear-gradient(135deg, #f7f8fc 0%, #eef1f8 100%);
+}
+
+.content {
+  padding: 1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #667eea;
+  background: #eef1ff;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+}
+
+.time {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e07c3e;
+  background: #fff4ec;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.4rem;
+}
+
+.description {
+  font-size: 0.88rem;
+  color: #718096;
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+  flex: 1;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.age {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #38a169;
+  background: #f0fff4;
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+}
+
+.tags {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.tag {
+  font-size: 0.7rem;
+  color: #a0aec0;
+  background: #f7fafc;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+}

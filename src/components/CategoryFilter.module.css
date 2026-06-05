@@ -1,0 +1,38 @@
+.wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.chip {
+  padding: 0.45rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 2rem;
+  background: white;
+  color: #4a5568;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.active:hover {
+  background: #5a6fd6;
+  border-color: #5a6fd6;
+  color: white;
+}

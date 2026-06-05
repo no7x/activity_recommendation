@@ -1,0 +1,17 @@
+.app {
+  min-height: 100vh;
+  background: #f7f8fc;
+}
+
+.controls {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.dateInfo {
+  text-align: center;
+  color: #4a5568;
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+}
