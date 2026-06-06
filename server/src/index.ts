@@ -1,9 +1,11 @@
+import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import cron from "node-cron";
 import path from "path";
 import { fileURLToPath } from "url";
 import type { CostLevel, Filters } from "../../src/providers/types";
+import { AiRanker } from "./aiRanker";
 import { createDb } from "./db";
 import { EventStore } from "./eventStore";
 import { NodeFetchAdapter } from "./NodeFetchAdapter";
@@ -21,6 +23,7 @@ const db = createDb();
 const store = new EventStore(db);
 const fetchAdapter = new NodeFetchAdapter();
 const pipelineRunner = new PipelineRunner(db, fetchAdapter);
+const aiRanker = new AiRanker();
 
 // --- API Routes ---
 
@@ -30,10 +33,21 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Get activities for a specific date
-app.get("/api/activities", (req, res) => {
+app.get("/api/activities", async (req, res) => {
   const date = (req.query.date as string) ?? new Date().toISOString().slice(0, 10);
   const filters = parseFilters(req.query);
   const activities = store.getActivities(date, filters);
+
+  if (aiRanker.isAvailable() && activities.length > 10) {
+    const ranked = await aiRanker.rank(activities, {
+      childAge: filters?.ageOfChild,
+      date: new Date(date),
+      preferences: filters?.category ? [filters.category] : undefined,
+    });
+    res.json({ date, count: ranked.length, activities: ranked, aiRanked: true });
+    return;
+  }
+
   res.json({ date, count: activities.length, activities });
 });
 
@@ -141,6 +155,7 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`API: http://localhost:${PORT}/api/activities`);
   console.log(`Pipeline: POST http://localhost:${PORT}/api/pipeline/run`);
+  console.log(`AI Ranking: ${aiRanker.isAvailable() ? "enabled" : "disabled (no OPENAI_API_KEY)"}`);
   console.log("Cron: daily at 6:00 AM + every 4 hours (3-day window)");
 });
 

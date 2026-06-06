@@ -17,6 +17,9 @@ server/data/*.db
 server/data/*.db-wal
 server/data/*.db-shm
 
+# Environment
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
